@@ -9,9 +9,17 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/draft-js": "^0.11.4",
+    "@types/draftjs-to-html": "^0.8.1",
+    "@types/html-to-draftjs": "^1.4.0",
+    "@types/react-draft-wysiwyg": "^1.13.3",
+    "draft-js": "^0.11.7",
+    "draftjs-to-html": "^0.9.1",
+    "html-to-draftjs": "^1.5.0",
     "next": "11.0.1",
     "react": "17.0.2",
-    "react-dom": "17.0.2"
+    "react-dom": "17.0.2",
+    "react-draft-wysiwyg": "^1.14.7"
   },
   "devDependencies": {
     "@types/react": "17.0.15",
