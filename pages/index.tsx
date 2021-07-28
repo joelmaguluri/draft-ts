@@ -58,6 +58,36 @@ const InlineStyleControls = (props: { editorState: { getCurrentInlineStyle: () =
     </div>
   );
 };
+const BLOCK_TYPES = [
+
+  { label: 'UL', style: 'unordered-list-item' },
+  { label: 'OL', style: 'ordered-list-item' },
+
+];
+
+const BlockStyleControls = (props: { onToggle?: any; editorState?: any; }) => {
+  const { editorState } = props;
+  const selection = editorState.getSelection();
+  const blockType = editorState
+    .getCurrentContent()
+    .getBlockForKey(selection.getStartKey())
+    .getType();
+
+  return (
+    <div className="RichEditor-controls">
+      {BLOCK_TYPES.map((type) =>
+        <StyleButton
+          key={type.label}
+          active={type.style === blockType}
+          label={type.label}
+          onToggle={props.onToggle}
+          style={type.style}
+        />
+      )}
+    </div>
+  );
+};
+
 
 const PageContainer = () => {
 
@@ -65,8 +95,6 @@ const PageContainer = () => {
     editorState: Draft.EditorState.createWithContent(emptyContentState),
 
   });
-
-  const [style, setStyle] = useState({ bold: false, italic: false, underline: false })
 
   const onChange = (editorState: any) => {
     setState({ editorState })
@@ -83,17 +111,7 @@ const PageContainer = () => {
   }
   const Editor = Draft.Editor;
 
-  const _onBoldClick = () => {
-    onChange(RichUtils.toggleInlineStyle(state.editorState, 'BOLD'));
-  }
 
-  const _onItalicClick = () => {
-    onChange(RichUtils.toggleInlineStyle(state.editorState, 'ITALIC'));
-  }
-
-  const _onUnderlineClick = () => {
-    onChange(RichUtils.toggleInlineStyle(state.editorState, 'UNDERLINE'));
-  }
 
   const _toggleInlineStyle = (inlineStyle: string) => {
     onChange(
@@ -105,9 +123,23 @@ const PageContainer = () => {
   }
 
 
+
+  const _toggleBlockType = (blockType: string) => {
+    onChange(
+      RichUtils.toggleBlockType(
+        state.editorState,
+        blockType
+      )
+    );
+  }
+
   return (
     <div className="editorContainer" >
       <div style={{ display: 'flex', justifyContent: 'space-evenly', flexDirection: 'row' }}>
+        <BlockStyleControls
+          editorState={state.editorState}
+          onToggle={_toggleBlockType}
+        />
         <InlineStyleControls
           editorState={state.editorState}
           onToggle={_toggleInlineStyle}
