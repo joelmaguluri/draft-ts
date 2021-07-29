@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import Draft, { Modifier, RichUtils } from "draft-js";
 import { ColorPicker } from "../components/ColorPicker";
 
-import { EditorState, SelectionState } from "draft-js";
+import { EditorState } from "draft-js";
 import { colorStyleMap } from "../constants/colors";
+import { Listbox } from '@headlessui/react'
+import FontSelector from "../components/FontSelector";
 
 
 const emptyContentState = Draft.convertFromRaw({
@@ -99,9 +101,6 @@ const PageContainer = () => {
     editorState: Draft.EditorState.createWithContent(emptyContentState),
 
   });
-  const [showColorPicker, toggleColorPickerState] = useState(true)
-  const updateEditorState = (editorState: any) => setState({ editorState });
-  const getEditorState = () => state.editorState;
 
 
   const onChange = (editorState: any) => {
@@ -177,6 +176,62 @@ const PageContainer = () => {
     onChange(nextEditorState);
   }
 
+  const fontStyleMap = {
+    'HAHMLET': {
+      fontFamily: 'Hahmlet, serif'
+    },
+    'OPENSANS': { fontFamily: "'Open Sans', sans-serif" },
+
+    'ROBOTO': { fontFamily: "'Roboto', sans-serif" },
+    'STYLESCRIPT': { fontFamily: "'Style Script', cursive" },
+
+  }
+
+  const _toggleFont = (toggledFont: string) => {
+    const { editorState } = state;
+    const selection = editorState.getSelection();
+
+
+    const nextContentState = Object.keys(fontStyleMap)
+      .reduce((contentState, fontFamily) => {
+        return Modifier.removeInlineStyle(contentState, selection, fontFamily)
+      }, editorState.getCurrentContent());
+
+    let nextEditorState = EditorState.push(
+      editorState,
+      nextContentState,
+      'change-inline-style'
+    );
+
+    const currentStyle = editorState.getCurrentInlineStyle();
+
+    // Unset style override for current color.
+    if (selection.isCollapsed()) {
+      nextEditorState = currentStyle.reduce((state, fontFamily) => {
+        return RichUtils.toggleInlineStyle(state as EditorState, fontFamily as string);
+      }, nextEditorState);
+    }
+
+    // If the color is being toggled on, apply it.
+    if (!currentStyle.has(toggledFont)) {
+      nextEditorState = RichUtils.toggleInlineStyle(
+        nextEditorState,
+        toggledFont
+      );
+    }
+
+    onChange(nextEditorState);
+  }
+
+  const styleMap = {
+    ...colorStyleMap,
+    ...fontStyleMap
+
+  };
+
+
+
+
   return (
     <div className="editorContainer" >
       <div style={{ display: 'flex', justifyContent: 'space-evenly', flexDirection: 'row' }}>
@@ -188,15 +243,17 @@ const PageContainer = () => {
           editorState={state.editorState}
           onToggle={_toggleInlineStyle}
         />
-        {showColorPicker && < ColorPicker toggleColor={_toggleColor} editorState={state.editorState} />}
-        {/* <ColorPicker defaultColor='#fffff2' editorState={state.editorState} ToggleHandler={_toggleColor} /> */}
+        {< ColorPicker toggleColor={_toggleColor} editorState={state.editorState} />}
+
+
+        <FontSelector editorState={state.editorState} toggleFont={_toggleFont} />
       </div>
 
       <div className="w-3/4 mx-auto border-2 editors border-low-contrast-2 hover:border-interaction-0 h-3/4" >
 
         <Editor
           editorState={state.editorState}
-          customStyleMap={colorStyleMap}
+          customStyleMap={styleMap}
           onChange={onChange}
           handleKeyCommand={handleKeyCommand}
           placeholder="Enter Text"
