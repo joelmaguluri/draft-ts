@@ -1,5 +1,9 @@
-import React, { useEffect, useState } from "react";
-import Draft, { EditorState, RichUtils } from "draft-js";
+import React, { useState } from "react";
+import Draft, { Modifier, RichUtils } from "draft-js";
+import { ColorPicker } from "../components/ColorPicker";
+
+import { EditorState, SelectionState } from "draft-js";
+import { colorStyleMap } from "../constants/colors";
 
 
 const emptyContentState = Draft.convertFromRaw({
@@ -95,6 +99,10 @@ const PageContainer = () => {
     editorState: Draft.EditorState.createWithContent(emptyContentState),
 
   });
+  const [showColorPicker, toggleColorPickerState] = useState(true)
+  const updateEditorState = (editorState: any) => setState({ editorState });
+  const getEditorState = () => state.editorState;
+
 
   const onChange = (editorState: any) => {
     setState({ editorState })
@@ -133,6 +141,42 @@ const PageContainer = () => {
     );
   }
 
+  const _toggleColor = (toggledColor: string) => {
+    const { editorState } = state;
+    const selection = editorState.getSelection();
+
+    // Let's just allow one color at a time. Turn off all active colors.
+    const nextContentState = Object.keys(colorStyleMap)
+      .reduce((contentState, color) => {
+        return Modifier.removeInlineStyle(contentState, selection, color)
+      }, editorState.getCurrentContent());
+
+    let nextEditorState = EditorState.push(
+      editorState,
+      nextContentState,
+      'change-inline-style'
+    );
+
+    const currentStyle = editorState.getCurrentInlineStyle();
+
+    // Unset style override for current color.
+    if (selection.isCollapsed()) {
+      nextEditorState = currentStyle.reduce((state, color) => {
+        return RichUtils.toggleInlineStyle(state as EditorState, color as string);
+      }, nextEditorState);
+    }
+
+    // If the color is being toggled on, apply it.
+    if (!currentStyle.has(toggledColor)) {
+      nextEditorState = RichUtils.toggleInlineStyle(
+        nextEditorState,
+        toggledColor
+      );
+    }
+
+    onChange(nextEditorState);
+  }
+
   return (
     <div className="editorContainer" >
       <div style={{ display: 'flex', justifyContent: 'space-evenly', flexDirection: 'row' }}>
@@ -144,14 +188,19 @@ const PageContainer = () => {
           editorState={state.editorState}
           onToggle={_toggleInlineStyle}
         />
+        {showColorPicker && < ColorPicker toggleColor={_toggleColor} editorState={state.editorState} />}
+        {/* <ColorPicker defaultColor='#fffff2' editorState={state.editorState} ToggleHandler={_toggleColor} /> */}
       </div>
 
-      <div className="editors" style={{ width: "500px", height: "500px", border: '2px solid red' }}>
+      <div className="w-3/4 mx-auto border-2 editors border-low-contrast-2 hover:border-interaction-0 h-3/4" >
+
         <Editor
           editorState={state.editorState}
+          customStyleMap={colorStyleMap}
           onChange={onChange}
           handleKeyCommand={handleKeyCommand}
-          placeholder="SOME TEXT"
+          placeholder="Enter Text"
+
         />
       </div>
     </div>
